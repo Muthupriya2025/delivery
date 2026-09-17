@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery App AI Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="chat-container">
+
+    <header class="header">
+        <h1>Delivery App AI Assistant</h1>
+        <p>Ask me about orders, delivery, charges, tracking and support.</p>
+    </header>
+
+    <div id="chatBox" class="chat-box">
+        <div class="message bot">
+            Hello! 👋 I am your Delivery App AI Assistant.
+            How can I help you today?
+        </div>
+    </div>
+
+    <form id="chatForm" class="input-area">
+        <input
+            type="text"
+            id="messageInput"
+            placeholder="Type your message..."
+            autocomplete="off"
+            required
+        >
+        <button type="submit">Send</button>
+    </form>
+
+</div>
+
+<script>
+const form = document.getElementById("chatForm");
+const input = document.getElementById("messageInput");
+const chatBox = document.getElementById("chatBox");
+
+const history = [];
+
+function addMessage(text, role) {
+    const message = document.createElement("div");
+    message.className = "message " + role;
+    message.textContent = text;
+    chatBox.appendChild(message);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+form.addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const message = input.value.trim();
+
+    if (!message) {
+        return;
+    }
+
+    addMessage(message, "user");
+    history.push({
+        role: "user",
+        text: message
+    });
+
+    input.value = "";
+    input.disabled = true;
+
+    try {
+        const response = await fetch("/chat", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                message: message,
+                history: history
+            })
+        });
+
+        const data = await response.json();
+
+        const reply = data.reply || data.error || "Something went wrong.";
+
+        addMessage(reply, "bot");
+
+        history.push({
+            role: "assistant",
+            text: reply
+        });
+
+    } catch (error) {
+        addMessage("Unable to connect to the server.", "bot");
+    }
+
+    input.disabled = false;
+    input.focus();
+});
+</script>
+
+</body>
+</html>
